@@ -5,9 +5,10 @@ regNum = re.compile("\d+")
 def checkOpcodes(before, opcodeLine, after):
     counter = 0
     opcodeNr, a, b, c = opcodeLine
-    for opcode, func in opcodes.items():
+    for opcode, func in opcodesLambdas.items():
         if after[c] == func(before, a, b):
             counter += 1
+            opcodes[opcodeNr].add(opcode) #
     return counter >= 3
 
 def lineToNum(line): #converts string "[1,2,3,4]" to list of int-numbers [1,2,3,4]
@@ -21,11 +22,35 @@ def checkGroups(lines):
             groupsMatchThreeOpcodesCounter += 1
     return groupsMatchThreeOpcodesCounter
 
+def deleteOpcodes(opcodeNrLeave, opcodeToBeDeleted):
+    opcodeToBeDeleted = list(opcodeToBeDeleted)[0]
+    for opcodeNr, opcodeSet in opcodes.items():
+        if opcodeNr != opcodeNrLeave:
+            if opcodeToBeDeleted in opcodeSet:
+                opcodes[opcodeNr].remove(opcodeToBeDeleted)
+
+def decodeOpcodeNumbers(opcodes):
+    allDone = False
+    done = set()
+    while not allDone:
+        allDone = True
+        for opcodeNr, opcode in opcodes.items():
+            if len(opcode) > 1:
+                allDone = False
+            if len(opcode) == 1 and opcodeNr not in done:
+                deleteOpcodes(opcodeNr, opcode)
+                done.add(opcodeNr)
+    #at this point each opcodeNr has only one string in set
+    for i in range(16): #convert all sets with len == 1 to strings
+        opcodes[i] = list(opcodes[i])[0]
+    return opcodes
+
 #MAIN
 with open("data.txt") as file:
     lines = file.read().splitlines()
 
-opcodes = {
+#definition of opcodes functions:
+opcodesLambdas = {
     "addr": lambda before, a, b: before[a] + before[b],     #register + register
     "addi": lambda before, a, b: before[a] + b,             #register + value
     "mulr": lambda before, a, b: before[a] * before[b],     #register * register
@@ -44,4 +69,22 @@ opcodes = {
     "eqrr": lambda before, a, b: before[a] == before[b],    #register == register
 }
 
+opcodes = dict()
+for i in range(16):
+    opcodes[i] = set()
+
+#Task1:
 print("Task 1:",checkGroups(lines))
+
+#Task2
+opcodesNr = decodeOpcodeNumbers(opcodes)
+registers = [0,0,0,0]
+
+with open("programm.txt") as file:
+    lines = file.read().splitlines()
+
+for index, line in enumerate(lines):
+    opcode, a, b, c = lineToNum(line)
+    registers[c] = opcodesLambdas[opcodesNr[opcode]](registers, a, b)
+
+print("Task 2:", registers[0])
