@@ -1,5 +1,6 @@
 #Advent of Code 2018: Day 20
 from collections import deque
+import re
 
 def tupleSum(a,b):
     return tuple([x + y for x, y in zip(a,b)])
@@ -9,7 +10,7 @@ def generateMaze(regexPath):
     maze = {(0,0):"X"}
     currentPosition = (0,0)
     lastInterception = []
-    for char in regexPath:
+    for index, char in enumerate(regexPath):
         if char in directions.keys():
             currentPosition = tupleSum(currentPosition, directions[char])
             maze[currentPosition] = "+" # door
@@ -19,6 +20,7 @@ def generateMaze(regexPath):
             lastInterception.append(currentPosition)
         elif char == "|":
             currentPosition = lastInterception[-1]
+        elif char == ")":
             lastInterception = lastInterception[:-1]
 
     return maze
@@ -52,19 +54,22 @@ def bfs(maze):
         queue.popleft()
     return max(distances.values())
 
+def countPath(line):
+    maze = generateMaze(line)
+    result = bfs(maze)
+    return result
+
 #MAIN
 with open("test.txt") as file:
     lines = file.read().splitlines()
 
 print("Results should be: 10, 18, 23 and 31 for test mazes:")
-for regexPath in lines:
-    maze = generateMaze(regexPath)
-    result = bfs(maze)
-    print("Maze: {0}: maxDist: {1}".format(regexPath, result))
+for line in lines:
+    result = countPath(line)
+    print("Maze: {0}: maxDist: {1}".format(line, result))
 
 with open("data.txt") as file:
     lines = file.read().splitlines()
 
-maze = generateMaze(lines[0])
-result = bfs(maze)
+result = countPath(lines[0])
 print("Result Task1:", result)
