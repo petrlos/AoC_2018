@@ -36,10 +36,35 @@ def printMaze(maze):
                 print("#", end="")
         print(" ")
 
+def bfs(maze):
+    directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]
+    distances = {(0,0):0}
+    queue = deque([(0,0)])
+    while queue:
+        currentPoint = queue[0]
+        for direction in directions:
+            neighbourDoor = tupleSum(direction, currentPoint)
+            if neighbourDoor in maze.keys():
+                notVisitedRoom = tupleSum(neighbourDoor, direction)
+                if notVisitedRoom not in distances.keys():
+                    distances[notVisitedRoom] = distances[currentPoint] + 1
+                    queue.append(notVisitedRoom)
+        queue.popleft()
+    return max(distances.values())
 
 #MAIN
-regexPath = "^ENWWW(NEEE|SSE(EE|N))$"
+with open("test.txt") as file:
+    lines = file.read().splitlines()
 
-maze = generateMaze(regexPath)
+print("Results should be: 10, 18, 23 and 31 for test mazes:")
+for regexPath in lines:
+    maze = generateMaze(regexPath)
+    result = bfs(maze)
+    print("Maze: {0}: maxDist: {1}".format(regexPath, result))
 
-printMaze(maze)
+with open("data.txt") as file:
+    lines = file.read().splitlines()
+
+maze = generateMaze(lines[0])
+result = bfs(maze)
+print("Result Task1:", result)
