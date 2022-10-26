@@ -8,51 +8,40 @@ def tupleSum(a,b):
 def generateMaze(regexPath):
     directions = {"W":(-1,0), "E":(1,0), "N":(0,1), "S":(0,-1)}
     maze = {(0,0):"X"}
-    currentPosition = (0,0)
+    currentPosition = (0,0) #start in the middle
     lastInterception = []
     for index, char in enumerate(regexPath):
-        if char in directions.keys():
+        if char in directions.keys(): #move in desired direction
             currentPosition = tupleSum(currentPosition, directions[char])
-            maze[currentPosition] = "+" # door
+            maze[currentPosition] = "+" #set up door
             currentPosition = tupleSum(currentPosition, directions[char])
-            maze[currentPosition] = "."
-        elif char == "(":
+            maze[currentPosition] = "." #set up room
+        elif char == "(": #intersection - save position
             lastInterception.append(currentPosition)
-        elif char == "|":
+        elif char == "|": #go to last interception
             currentPosition = lastInterception[-1]
-        elif char == ")":
+        elif char == ")": #branch closed, remove interception from list
             lastInterception = lastInterception[:-1]
-
     return maze
-
-def printMaze(maze):
-    lstX, lstY = [], []
-    for x,y in maze.keys():
-        lstX.append(x)
-        lstY.append(y)
-    for y in range(max(lstY)+1, min(lstY)-2, -1):
-        for x in range(min(lstX)-1, max(lstX)+2, 1):
-            if (x, y) in maze.keys():
-                print(maze[(x, y)], end="")
-            else:
-                print("#", end="")
-        print(" ")
 
 def bfs(maze):
     directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]
     distances = {(0,0):0}
     queue = deque([(0,0)])
-    while queue:
+    while queue: #bfs searchh
         currentPoint = queue[0]
         for direction in directions:
             neighbourDoor = tupleSum(direction, currentPoint)
-            if neighbourDoor in maze.keys():
-                notVisitedRoom = tupleSum(neighbourDoor, direction)
-                if notVisitedRoom not in distances.keys():
-                    distances[notVisitedRoom] = distances[currentPoint] + 1
-                    queue.append(notVisitedRoom)
+            if neighbourDoor in maze.keys(): #is there a door in any direction?
+                notVisitedRoom = tupleSum(neighbourDoor, direction) #in same direction must be a room as well
+                if notVisitedRoom not in distances.keys(): #have i NOT yet visited this room?
+                    distances[notVisitedRoom] = distances[currentPoint] + 1 #distance +1 to previous room
+                    queue.append(notVisitedRoom) #must check neighbours of not yet visited rooms
         queue.popleft()
-    return max(distances.values())
+    task1 = max(distances.values())
+    #task2: oneliner :)
+    task2 = len(list(filter(lambda x: x >= 1000, distances.values())))
+    return task1, task2
 
 def countPath(line):
     maze = generateMaze(line)
@@ -63,13 +52,15 @@ def countPath(line):
 with open("test.txt") as file:
     lines = file.read().splitlines()
 
-print("Results should be: 10, 18, 23 and 31 for test mazes:")
+print("Test mazes: Results should be: 10, 18, 23 and 31:")
 for line in lines:
-    result = countPath(line)
-    print("Maze: {0}: maxDist: {1}".format(line, result))
+    task1, task2 = countPath(line)
+    print("Maze: {0}: maxDist: {1}".format(line, task1))
 
+print(" ")
 with open("data.txt") as file:
     lines = file.read().splitlines()
 
-result = countPath(lines[0])
-print("Result Task1:", result)
+task1, task2 = countPath(lines[0])
+print("Result Task1:", task1)
+print("Result Task2:", task2)
