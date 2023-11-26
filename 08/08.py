@@ -1,25 +1,30 @@
-#Advent of Code 2018 Day8:
+#Advent of Code 2018: Day 8
+#answer should be 40746
 
-#TODO: not yet working recursion
+class Node:
+    def __init__(self, num_children, num_metadata):
+        self.num_children = num_children
+        self.num_metadata = num_metadata
+        self.children = []
+        self.metadata = []
 
-def getMetadata(numbers, children):
-    currentPosition = 0
-    if numbers[currentPosition] == 0: # neni potreba hledat vice do hloubky
-        length = numbers[currentPosition+1]
-        slice = numbers[currentPosition+2:currentPosition+2+length]
-        currentPosition+= length + 2
-        print(slice)
-    else:
-        for child in range(numbers[currentPosition]):
-            getMetadata()
+def parse_tree(numbers):
+    #vezme z celeho listu prvni dve pozice - pocet deti a pocet metadat
+    child_count, metadata_count = numbers.pop(0), numbers.pop(0)
+    #zalozi instanci tridy Node
+    node = Node(child_count, metadata_count)
+    #pokud je pocet deti vetsi nez 0, zavola funkci opet se zkracenym listem
+    for _ in range(child_count):
+        node.children.append(parse_tree(numbers))
+    #do metadat ulozi prvnich "metadata_count" cisel a orizne list
+    for _ in range(metadata_count):
+        node.metadata.append(numbers.pop(0))
+    return node
 
+#MAIN
 with open("test.txt") as file:
-    data = file.readline()
+    numbers = list(map(int,file.read().split(" ")))
 
-#data = "0 3 1 2 3"
-data = "1 1 0 99 2 1 1 2"
-data = [int(x) for x in data.split(" ")]
+tree = parse_tree(numbers)
 
-print(data)
-
-getMetadata(data, 1)
+print(" ")
