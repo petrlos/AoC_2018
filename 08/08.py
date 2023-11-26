@@ -1,5 +1,4 @@
 #Advent of Code 2018: Day 8
-#answer should be 40746
 
 class Node:
     def __init__(self, num_children, num_metadata):
@@ -21,10 +20,13 @@ def parse_tree(numbers):
         node.metadata.append(numbers.pop(0))
     return node
 
+def count_sum_metadata(tree):
+    return sum(tree.metadata) + sum(count_sum_metadata(child) for child in tree.children)
+
 #MAIN
-with open("test.txt") as file:
+with open("data.txt") as file:
     numbers = list(map(int,file.read().split(" ")))
 
-tree = parse_tree(numbers)
+tree = parse_tree(numbers) #Class Node
 
-print(" ")
+print(count_sum_metadata(tree))
