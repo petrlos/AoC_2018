@@ -23,10 +23,22 @@ def parse_tree(numbers):
 def count_sum_metadata(tree):
     return sum(tree.metadata) + sum(count_sum_metadata(child) for child in tree.children)
 
+def count_sum_part2(node):
+    if node.num_children == 0:
+        return sum(node.metadata)
+    else:
+        value = 0
+        for index in node.metadata:
+            if 0 <= index - 1 < node.num_children:
+                value += count_sum_part2(node.children[index-1])
+    return value
+
 #MAIN
 with open("data.txt") as file:
     numbers = list(map(int,file.read().split(" ")))
 
 tree = parse_tree(numbers) #Class Node
 
-print(count_sum_metadata(tree))
+print("Part 1:", count_sum_metadata(tree))
+
+print("Part 2:", count_sum_part2(tree))
