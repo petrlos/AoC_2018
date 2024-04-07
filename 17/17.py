@@ -1,32 +1,83 @@
 #Advent of Code 2018: Day 17
 import re
-from collections import defaultdict, Counter, deque
+from collections import deque, namedtuple, defaultdict
+from icecream import ic
 
-def create_field(lines):
-    field = defaultdict(lambda: ".")
-    for line in lines:
-        constant, start, end = list(map(int, (re.findall(r"\d+", line))))
-        list_constant = [constant] * (end-start+1)
-        list_range = list(range(start, end+1))
-        if line[0] == "x":
-            coords = (zip(list_constant, list_range))
-        else:
-            coords = (zip(list_range, list_constant))
-        for coord in coords:
-            field[coord] = "#"
-    return field
-
-def draw_field(field):
-    print("  44444455555555 \n  99999900000000 \n  45678901234567")
-    for y in range(0, 14):
-        print(str(y)[-1], end=" ")
-        for x in range(494, 508):
-                print(field[(x,y)], end="")
+def draw_underground(underground, min_row, max_row, min_col, max_col):
+    for r in range(min_row-2, max_row+3):
+        for c in range(min_col-2, max_col +3):
+            print(underground[(r,c)], end="")
         print(" ")
+    print(" ")
 
-#MAINd
-with open("test.txt") as file:
+def generate_underground(lines):
+    underground = defaultdict(lambda:".")
+    for line in lines:
+        m,n,o = map(int,(re.findall(r"\d+",line)))
+        if line.startswith("x"):
+            c1 = c2 = m #vertical line has column coord the same
+            r1 = n
+            r2 = o
+        else:
+            r1 = r2 = m #horizontal line has row coord the same
+            c1 = n
+            c2 = o
+        for c in range(c1, c2 + 1):
+            for r in range(r1, r2 + 1):
+                underground[r,c] = "#"
+    min_row = min(underground.keys(), key=lambda item: item[0])[0]
+    max_row = max(underground.keys(), key=lambda item: item[0])[0]
+    min_col = min(underground.keys(), key=lambda item: item[1])[1]
+    max_col = max(underground.keys(), key=lambda item: item[1])[1]
+    return underground, min_row, max_row, min_col, max_col
+
+def spread_to_sides(drop):
+    new_drops = []
+    for i in [-1, +1]: #-1 = spread left, +1 = spread right
+        row, col = drop.coord
+        while underground[(row,col + i)] != "#":
+            underground[(row,col + i)] = "~"
+            if underground[(row+1, col+i)] == ".":
+                new_drops.append(Drop((row, col+i), "d"))
+                break
+            col += i
+    if len(new_drops) == 0:
+        row, col = drop.coord
+        new_drops.append(Drop((row-1,col), "s"))
+    return new_drops
+
+#MAIN
+with open("data.txt") as file:
     lines = file.read().splitlines()
 
-field = create_field(lines)
-draw_field(field)
+underground, min_row, max_row, min_col, max_col = generate_underground(lines)
+
+Drop = namedtuple("Drop", ["coord", "dir"]) #direction: d=down, s=left+right
+queue = deque([Drop((0,500), "d")])
+
+while queue:
+    current = queue.popleft()
+    r,c = current.coord
+    if r > max_row:
+        continue
+    if current.dir == "d": #drop down
+        if underground[(r+1,c)] == ".": #space beneath - drop
+            queue.append(Drop((r+1,c), "d"))
+        if underground[(r+1,c)] == "#": #wall - spread left + righ
+            queue.append(Drop((r,c), "s"))
+    if current.dir == "s":
+        new_drops = spread_to_sides(current)
+        for new_drop in new_drops:
+            queue.append(new_drop)
+    underground[current.coord] = "~"
+    ic(queue)
+draw_underground(underground, min_row, max_row, min_col, max_col)
+
+counter = 0
+for coord, value in underground.items():
+    if coord[0] >= min_row and value == "~":
+        counter += 1
+
+print(counter)
+
+#TODO: Not working, minor issues - see test2.txt
