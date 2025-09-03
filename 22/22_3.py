@@ -1,7 +1,6 @@
 #Advent of Code 2018: Day 23
 import heapq
 from collections import defaultdict
-from icecream import ic
 
 class Cave:
     def __init__(self, depth, target):
@@ -75,11 +74,9 @@ def find_path(cave):
 test_cave = Cave(510, (10,10))
 real_cave = Cave(5616, (10,785))
 
-terrain = {0:".", 1:"=", 2:"|"}
-
 print("Part 1 test:", test_cave.total_risk_lvl())
-print("Part 1 real:", real_cave.total_risk_lvl())
+print("Part 2 test:", find_path(test_cave))
 print(" ")
 
-print("Part 2 test:", find_path(test_cave))
+print("Part 1 real:", real_cave.total_risk_lvl())
 print("Part 2 real:", find_path(real_cave))
