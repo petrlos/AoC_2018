@@ -4,14 +4,18 @@ from icecream import ic
 import time
 
 class Unit:
-    def __init__(self, which_army, line, group_id):
+    def __init__(self, which_army, line, group_id, boost):
         self.group_id = group_id
         self.which_army = which_army
         self.count = int(re.search(r"(\d+) units", line).group(1))
         self.hp = int(re.search(r"(\d+) hit", line).group(1))
         dmg, dtype = re.search(r"(\d+) (\w+) damage", line).groups()
+        if which_army == 0:
+            dmg = int(dmg) + boost
+        else:
+            dmg = int(dmg)
         self.dmg_given = [0] * 5
-        self.dmg_given[dmg_type[dtype]] = int(dmg)
+        self.dmg_given[dmg_type[dtype]] = dmg
         self.init = int(re.search(r"initiative (\d+)", line).group(1))
         weak = []
         immune = []
@@ -60,7 +64,7 @@ for line in lines[1:]:
         which_army += 1
         group_id = 1
         continue
-    unit = Unit(which_army, line, group_id)
+    unit = Unit(which_army, line, group_id, 51) #boost tested manually via binary search
     armies.append(unit)
     group_id += 1
 
@@ -87,18 +91,18 @@ while all_dead(armies):
                 attacker.theor_dmg = theor_dmg
         if attacker.target is not None: attacker.target.selected = True
 
-    #sort by initiative
+    #sort by initiative and attack
     armies.sort(key=lambda g: (-g.init))
-    #attack
     for attacker in armies:
         if attacker.count == 0: continue #all dead
         if attacker.target is None: continue
         dmg_done = max([x*y*attacker.count for x, y in zip(attacker.dmg_given, attacker.target.weaknesses)])
         kills = min(attacker.target.count, dmg_done // attacker.target.hp)
-        #print(f"{which[attacker.which_army]} {attacker.group_id}: deals {dmg_done} to group {attacker.target.group_id} and kills {kills} units.")
+        #print(f"{which[attacker.which_army]} {attacker.group_id}: deals {dmg_done}
+        #to group {attacker.target.group_id} and kills {kills} units.")
         attacker.target.count -= kills
 
-    for army in armies:
+    for army in armies: #reset targets
         army.target = None
         army.selected = False
 
