@@ -21,7 +21,9 @@ class Unit:
                 elif "weak" in weakness:
                     weak = [dmg_type[x] for x in weakness.replace("weak to ", "").split(", ")]
         self.weaknesses = [0 if i in immune else 2 if i in weak else 1 for i in range(5)]
-        self.dmg_taken = 0
+        self.selected = False
+        self.target = None
+        self.theor_dmg = 0
 
     @property
     def eff_power(self):
@@ -29,10 +31,10 @@ class Unit:
 
     def __repr__(self):
         which = dict({0: "Immune:", 1: "Infect:"})
-        return f"Type: {which[self.which_army]} Units:{self.count}, HP:{self.hp}, Init.:{self.init}, Weak.:{self.weaknesses}, Dmg.:{self.dmg_given}"
+        return f"Army {which[self.which_army]} Units:{self.count}, Dmg.:{max(self.dmg_given)}, HP:{self.hp}, Init.:{self.init}, Weak.:{self.weaknesses}, Dmg:{self.dmg_given}"
 
 #MAIN
-with open("data.txt") as file:
+with open("test.txt") as file:
     lines = file.read().split("\n")
 
 dmg_type = dict(zip("fire,cold,slashing,radiation,bludgeoning".split(","), (range(5))))
@@ -44,7 +46,28 @@ for line in lines[1:]:
         which_army += 1
         continue
     unit = Unit(which_army, line)
-    print(unit)
     armies.append(unit)
 
-ic(armies)
+#sort via decreasing efficient power, by tie by initiative
+armies.sort(key=lambda g: (-g.eff_power, -g.init))
+for attacker in armies:
+    attacker.target = None
+    attacker.theor_dmg = -1
+    for target in armies:
+        if target.selected: continue
+        if attacker.which_army == target.which_army: continue
+        theor_dmg = max([x*y*attacker.count for x, y in zip(attacker.dmg_given, target.weaknesses)])
+        if theor_dmg == 0: continue
+        if attacker.target is None:
+            attacker.target = target
+            attacker.theor_dmg = theor_dmg
+        elif ((theor_dmg, target.eff_power, target.init) >
+                (attacker.theor_dmg, attacker.target.eff_power,attacker.target.init)):
+            attacker.target = target
+            attacker.theor_dmg = theor_dmg
+    if attacker.target is not None: attacker.target.selected = True
+
+for attacker in armies:
+    ic(attacker)
+    ic(attacker.target)
+    ic(attacker.theor_dmg)
